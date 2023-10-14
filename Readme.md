@@ -1,9 +1,9 @@
 # Scaffold Project
 ## Rust Based Scaffolder
-- [ ] Project Scaffold
-    - [ ] Symlink / Copy Model Source Folder
-    - [ ] Make Textures Folder
-    - [ ] Flatten Textures and Generate Alpha Maps
+- [x] Project Scaffold
+    - [x] Symlink / Copy Model Source Folder
+    - [x] Make Textures Folder
+    - [x] Flatten Textures and Generate Alpha Maps
 
 ## Folder Structure
 
