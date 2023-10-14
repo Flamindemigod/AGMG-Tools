@@ -22,7 +22,7 @@ struct Cli{
     tex_only: bool,   
     
     /// Project Name to use as Project Root
-    #[arg(long)]
+    #[arg(short, long)]
     name: PathBuf
 }
 
