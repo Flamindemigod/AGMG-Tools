@@ -171,8 +171,6 @@ fn gen_tex(source_path: PathBuf, root_path: &PathBuf, tex_only: bool) -> Result<
     grab_tex(source.clone(), tex_path.clone(), "LightMap", true)?;
     grab_tex(source.clone(), tex_path.clone(), "NormalMap", false)?;
     Ok(())
-
-    // todo!("Generate Flat Textures and Alpha Maps")
 }
 
 fn main() {
