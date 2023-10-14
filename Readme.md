@@ -37,7 +37,7 @@
 
 # Automated Mod Texture Builder + Linker
 ## Rust Based Listener
-- Await File Changes in Mod Output / Textures
-- Texture Join + Convert
-- Rebuild Mod
-- Symlink Mod
+- [x] Await File Changes in Mod Output / Textures
+- [x] Texture Join + Convert
+- [x] Rebuild Mod
+- [x] Symlink Mod
