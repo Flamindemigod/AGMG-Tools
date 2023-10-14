@@ -10,4 +10,9 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.75"
 clap = {version = "4.4.6", features = ["derive"]}
+ddsfile = "0.5.1"
 fs_extra = "1.3.0"
+glob = "0.3.1"
+image = "0.24.7"
+image_dds = "0.1.1"
+itertools = "0.11.0"
