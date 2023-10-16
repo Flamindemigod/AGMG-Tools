@@ -973,13 +973,14 @@ def newMat(name, textures):
 
     #Diffuse Flat Texture
     diffuse_flat_image = newTex(material, textures["diffuse_flat"])
-    overlay = material.node_tree.nodes.new("ShaderNodeMix")
-    overlay.blend_type = "OVERLAY"
-    overlay.clamp_factor = True
-    overlay.data_type = "RGBA"
-    overlay.inputs[0].default_value = 1
-    material.node_tree.links.new(diffuse_flat_image.outputs[0], overlay.inputs[-1])
-    material.node_tree.links.new(overlay.outputs[-1], bsdf.inputs[0])
+    AO = material.node_tree.nodes.new("ShaderNodeAmbientOcclusion")
+    ao_mult = material.node_tree.nodes.new("ShaderNodeMix")
+    ao_mult.blend_type = "MULTIPLY"
+    ao_mult.clamp_factor = True
+    ao_mult.data_type = "RGBA"
+    ao_mult.inputs[0].default_value = 1
+    material.node_tree.links.new(diffuse_flat_image.outputs[0], ao_mult.inputs[-1])
+    material.node_tree.links.new(ao_mult.outputs[-1], bsdf.inputs[0])
 
 
 
@@ -1000,7 +1001,8 @@ def newMat(name, textures):
     sep_color = material.node_tree.nodes.new("ShaderNodeSeparateColor")
     material.node_tree.links.new(sep_color.outputs[0], bsdf.inputs[6])
     material.node_tree.links.new(lightmap_flat_image.outputs[0], sep_color.inputs[0])
-    material.node_tree.links.new(sep_color.outputs[1], overlay.inputs[-2])
+    material.node_tree.links.new(sep_color.outputs[1], AO.inputs[0])
+    material.node_tree.links.new(AO.outputs[-1], ao_mult.inputs[-2])
     
     map_range = material.node_tree.nodes.new("ShaderNodeMapRange")
     map_range.clamp = True
@@ -1064,7 +1066,7 @@ def post_import_3dmigoto(operator, context, paths, load_tex=True, **kwargs):
                 "lightmap_flat": parse(key, "LightMapFlat.png", None),
                 "normalmap_flat": parse(key, "NormalMapFlat.png", None),
         })
-
+    
     meshes = import_files(context, keys, file_array)
      
     # select all imported meshes, go to edit mode
