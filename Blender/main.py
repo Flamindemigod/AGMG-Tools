@@ -1065,10 +1065,24 @@ def post_import_3dmigoto(operator, context, paths, load_tex=True, **kwargs):
                 "normalmap_flat": parse(key, "NormalMapFlat.png", None),
         })
 
-    import_files(context, keys, file_array)
+    meshes = import_files(context, keys, file_array)
+     
+    # select all imported meshes, go to edit mode
     bpy.ops.object.select_all(action='DESELECT')
+    for obj in meshes:
+        obj.select_set(True)
+    bpy.ops.object.mode_set(mode='EDIT')
+    
+    bpy.ops.mesh.select_all(action='SELECT') 
+    bpy.ops.mesh.remove_doubles(use_sharp_edge_from_normals=True)
 
-    return False
+    # Alt + J with all options selected (tris to quads conversion)
+    bpy.ops.mesh.tris_convert_to_quads(uvs=True,vcols=True,seam=True,sharp=True,materials=True)
+
+    # Cleanup: Delete loose vertices
+    bpy.ops.mesh.delete_loose()
+    
+    return {"FINISHED"}
     
 
 def import_3dmigoto_vb_ib(operator, context, paths, flip_texcoord_v=True, axis_forward='-Z', axis_up='Y', pose_cb_off=[0,0], pose_cb_step=1, load_tex=True):
