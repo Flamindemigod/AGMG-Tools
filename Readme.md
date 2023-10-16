@@ -29,11 +29,12 @@
 
 # Blender Model Custom Importer 
 ## Python Based
-- [ ] Import Files via VB/IB
-    - [ ] Textures
-        - [ ] Use Generated Textures or Fail
-- [ ] Exporter
-    - [ ] Generates Mod Files
+- [x] Import Files via VB/IB
+    - [x] Cleanup Meshes
+    - [x] Textures
+        - [x] Use Generated Textures or Fail
+- [x] Exporter
+    - [x] Generates Mod Files
 
 # Automated Mod Texture Builder + Linker
 ## Rust Based Listener
