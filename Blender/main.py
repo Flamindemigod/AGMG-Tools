@@ -1895,7 +1895,7 @@ def generate_mod_folder(path, character_name, no_ramps, delete_intermediate, cre
                 if delete_intermediate:
                     os.remove(os.path.join(path, f"{current_name}{current_object}.ib"))
 
-                with open(os.path.join(parent_folder, f"{character_name}Mod", f"{current_name}{current_object}.ib"), "wb") as f:
+                with open(os.path.join(parent_folder,"Output", f"{current_name}{current_object}.ib"), "wb") as f:
                     f.write(ib)
                 if ib:
                     ib_override_ini += f"[TextureOverride{current_name}{current_object}]\nhash = {component['ib']}\nmatch_first_index = {component['object_indexes'][i]}\nib = Resource{current_name}{current_object}IB\n"
@@ -1923,7 +1923,7 @@ def generate_mod_folder(path, character_name, no_ramps, delete_intermediate, cre
                     texture = texture_hashes[j]
                     ib_override_ini += f"[TextureOverride{current_name}{current_object}{texture[0]}]\nhash = {texture[2]}\n"
                     shutil.copy(os.path.join(path, f"{current_name}{current_object}{texture[0]}{texture[1]}"),
-                                os.path.join(parent_folder, f"{character_name}Mod", f"{current_name}{current_object}{texture[0]}{texture[1]}"))
+                                os.path.join(parent_folder,"Output", f"{current_name}{current_object}{texture[0]}{texture[1]}"))
                     ib_override_ini += f"ps-t{j} = Resource{current_name}{current_object}{texture[0]}\n"
                     tex_res_ini += f"[Resource{current_name}{current_object}{texture[0]}]\nfilename = {current_name}{current_object}{texture[0]}{texture[1]}\n\n"
                 else:
@@ -1931,16 +1931,16 @@ def generate_mod_folder(path, character_name, no_ramps, delete_intermediate, cre
                         if no_ramps and texture[0] in ["ShadowRamp", "MetalMap", "DiffuseGuide"]:
                             continue
                         shutil.copy(os.path.join(path, f"{current_name}{current_object}{texture[0]}{texture[1]}"),
-                                    os.path.join(parent_folder, f"{character_name}Mod",f"{current_name}{current_object}{texture[0]}{texture[1]}"))
+                                    os.path.join(parent_folder,"Output",f"{current_name}{current_object}{texture[0]}{texture[1]}"))
                         ib_override_ini += f"ps-t{j} = Resource{current_name}{current_object}{texture[0]}\n"
                         tex_res_ini += f"[Resource{current_name}{current_object}{texture[0]}]\nfilename = {current_name}{current_object}{texture[0]}{texture[1]}\n\n"
                 ib_override_ini += "\n"
 
             if component["blend_vb"]:
                 print("Writing merged buffer files")
-                with open(os.path.join(parent_folder, f"{character_name}Mod", f"{current_name}Position.buf"), "wb") as f, \
-                        open(os.path.join(parent_folder, f"{character_name}Mod", f"{current_name}Blend.buf"), "wb") as g, \
-                        open(os.path.join(parent_folder, f"{character_name}Mod", f"{current_name}Texcoord.buf"), "wb") as h:
+                with open(os.path.join(parent_folder,"Output", f"{current_name}Position.buf"), "wb") as f, \
+                        open(os.path.join(parent_folder,"Output", f"{current_name}Blend.buf"), "wb") as g, \
+                        open(os.path.join(parent_folder,"Output", f"{current_name}Texcoord.buf"), "wb") as h:
                     f.write(position)
                     g.write(blend)
                     h.write(texcoord)
@@ -1957,7 +1957,7 @@ def generate_mod_folder(path, character_name, no_ramps, delete_intermediate, cre
                 vb_res_ini += f"[Resource{current_name}Blend]\ntype = Buffer\nstride = 32\nfilename = {current_name}Blend.buf\n\n"
                 vb_res_ini += f"[Resource{current_name}Texcoord]\ntype = Buffer\nstride = {stride - 72}\nfilename = {current_name}Texcoord.buf\n\n"
             else:
-                with open(os.path.join(parent_folder, f"{character_name}Mod", f"{current_name}.buf"), "wb") as f:
+                with open(os.path.join(parent_folder,"Output", f"{current_name}.buf"), "wb") as f:
                     f.write(position)
                 vb_override_ini += f"[TextureOverride{current_name}]\nhash = {component['draw_vb']}\nvb0 = Resource{current_name}\n"
                 if credit:
@@ -1988,7 +1988,7 @@ def generate_mod_folder(path, character_name, no_ramps, delete_intermediate, cre
                     texture = texture_hashes[j]
                     ib_override_ini += f"[TextureOverride{current_name}{current_object}{texture[0]}]\nhash = {texture[2]}\n"
                     shutil.copy(os.path.join(path, f"{current_name}{current_object}{texture[0]}{texture[1]}"),
-                                os.path.join(parent_folder, f"{character_name}Mod",f"{current_name}{current_object}{texture[0]}{texture[1]}"))
+                                os.path.join(parent_folder,"Output",f"{current_name}{current_object}{texture[0]}{texture[1]}"))
                     ib_override_ini += f"ps-t{j} = Resource{current_name}{current_object}{texture[0]}\n\n"
                     tex_res_ini += f"[Resource{current_name}{current_object}{texture[0]}]\nfilename = {current_name}{current_object}{texture[0]}{texture[1]}\n\n"
                 else:
@@ -1997,7 +1997,7 @@ def generate_mod_folder(path, character_name, no_ramps, delete_intermediate, cre
                             continue
                         ib_override_ini += f"[TextureOverride{current_name}{current_object}{texture[0]}]\nhash = {texture[2]}\n"
                         shutil.copy(os.path.join(path, f"{current_name}{current_object}{texture[0]}{texture[1]}"),
-                                    os.path.join(parent_folder, f"{character_name}Mod",f"{current_name}{current_object}{texture[0]}{texture[1]}"))
+                                    os.path.join(parent_folder,"Output",f"{current_name}{current_object}{texture[0]}{texture[1]}"))
                         ib_override_ini += f"ps-t{j} = Resource{current_name}{current_object}{texture[0]}\n\n"
                         tex_res_ini += f"[Resource{current_name}{current_object}{texture[0]}]\nfilename = {current_name}{current_object}{texture[0]}{texture[1]}\n\n"
                 ib_override_ini += "\n"
@@ -2024,7 +2024,7 @@ def generate_mod_folder(path, character_name, no_ramps, delete_intermediate, cre
     ini_data += f"\n; .ini generated by GIMI (Genshin-Impact-Model-Importer)\n" \
         f"; If you have any issues or find any bugs, please open a ticket at https://github.com/SilentNightSound/GI-Model-Importer/issues or contact SilentNightSound#7430 on discord"
 
-    with open(os.path.join(parent_folder, f"{character_name}Mod", f"{character_name}.ini"), "w") as f:
+    with open(os.path.join(parent_folder,"Output", f"{character_name}.ini"), "w") as f:
         print("Writing ini file")
         f.write(ini_data)
 
