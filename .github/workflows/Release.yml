@@ -44,4 +44,4 @@ jobs:
           zip: windows
           # (required) GitHub token for uploading assets to GitHub Releases.
           token: ${{ secrets.GITHUB_TOKEN }}
-          asset: COPYING,README.md,Blender/blender_3dmigoto_plugin.py
+          asset: COPYING,Readme.md,Blender/blender_3dmigoto_plugin.py
