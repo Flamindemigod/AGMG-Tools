@@ -997,21 +997,22 @@ def newMat(name, textures):
     material.node_tree.links.new(diffuse_alpha_image.outputs[0], multiply.inputs[-2])
     material.node_tree.links.new(multiply.outputs[-1], bsdf.inputs["Emission"])
     #Lightmap Flat Texture
-    lightmap_flat_image = newTex(material, textures["lightmap_flat"])
-    sep_color = material.node_tree.nodes.new("ShaderNodeSeparateColor")
-    material.node_tree.links.new(sep_color.outputs[0], bsdf.inputs[6])
-    material.node_tree.links.new(lightmap_flat_image.outputs[0], sep_color.inputs[0])
-    material.node_tree.links.new(sep_color.outputs[1], AO.inputs[0])
-    material.node_tree.links.new(AO.outputs[-1], ao_mult.inputs[-2])
-    
-    map_range = material.node_tree.nodes.new("ShaderNodeMapRange")
-    map_range.clamp = True
-    map_range.inputs[1].default_value = 0
-    map_range.inputs[2].default_value = 1
-    map_range.inputs[3].default_value = 1
-    map_range.inputs[4].default_value = 0
-    material.node_tree.links.new(sep_color.outputs[2], map_range.inputs[0])
-    material.node_tree.links.new(map_range.outputs[0], bsdf.inputs[9])
+    if textures["lightmap_flat"]:
+        lightmap_flat_image = newTex(material, textures["lightmap_flat"])
+        sep_color = material.node_tree.nodes.new("ShaderNodeSeparateColor")
+        material.node_tree.links.new(sep_color.outputs[0], bsdf.inputs[6])
+        material.node_tree.links.new(lightmap_flat_image.outputs[0], sep_color.inputs[0])
+        material.node_tree.links.new(sep_color.outputs[1], AO.inputs[0])
+        material.node_tree.links.new(AO.outputs[-1], ao_mult.inputs[-2])
+        
+        map_range = material.node_tree.nodes.new("ShaderNodeMapRange")
+        map_range.clamp = True
+        map_range.inputs[1].default_value = 0
+        map_range.inputs[2].default_value = 1
+        map_range.inputs[3].default_value = 1
+        map_range.inputs[4].default_value = 0
+        material.node_tree.links.new(sep_color.outputs[2], map_range.inputs[0])
+        material.node_tree.links.new(map_range.outputs[0], bsdf.inputs[9])
 
 
 
