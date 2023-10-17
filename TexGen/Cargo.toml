@@ -1,0 +1,16 @@
+[package]
+name = "tex_gen"
+version = "0.1.0"
+edition = "2021"
+authors = ["Flamindemigod"]
+description = "A Simple Command Line Utility to Build Ini for Texture Overrides for AGMG"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.75"
+clap = {version = "4.4.6", features = ["derive"]}
+wild = "2.2.0"
+ddsfile = "0.5.1"
+image = "0.24.7"
+image_dds = "0.1.1"
+rayon = "1.8.0"
