@@ -41,7 +41,7 @@ jobs:
           # (optional) On which platform to distribute the `.zip` file.
           # [default value: windows]
           # [possible values: all, unix, windows, none]
-          zip: windows
+          zip: none
           # (required) GitHub token for uploading assets to GitHub Releases.
           token: ${{ secrets.GITHUB_TOKEN }}
           asset: COPYING,Readme.md,Blender/blender_3dmigoto_plugin.py
