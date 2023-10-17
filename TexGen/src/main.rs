@@ -12,11 +12,11 @@ use std::{
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
 struct Cli {
-    /// Path to Target Folder (Generates the Ini and moves files here)
+    /// Path to Target Folder (Generates the Ini Here, Creates the Folder if it doesnt exist)
     #[arg(short, long)]
     target: PathBuf,
 
-    /// Copy Files To Target
+    /// Copy Texture Files To Target
     #[arg(short, long, default_value_t = false)]
     cp: bool,
 
@@ -24,7 +24,7 @@ struct Cli {
     #[arg(short, long, default_value = "Mod.ini")]
     ini_name: String,
 
-    /// Files to Override
+    /// Files to Use to Build Ini
     #[arg(short, long, num_args(1..), required= true)]
     files: Vec<PathBuf>,
 }
