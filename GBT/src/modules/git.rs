@@ -2,15 +2,15 @@ use std::{
     collections::VecDeque,
     ffi::OsStr,
     fmt::{Display, Write},
-    fs::{self, canonicalize},
+    fs,
     path::PathBuf,
 };
 
-use anyhow::{Result, Error};
+use anyhow::Result;
 use indicatif::{MultiProgress, ProgressBar, ProgressState, ProgressStyle};
-use log::{error, info, trace};
+use log::{info, trace};
 use rayon::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::utils::download::Downloader;
 
@@ -75,7 +75,7 @@ impl Git {
             .collect();
         
         let parsed_res = results?;
-        let _: Vec<()> = parsed_res.clone().par_iter().map(|res| info!("Downloaded : {:#?}", res)).collect();
+        let _: Vec<()> = parsed_res.clone().par_iter().map(|res| info!("Downloaded: {:#?}", res)).collect();
         trace!("Download Finished");
         Ok(parsed_res)
     }
@@ -91,7 +91,7 @@ impl Display for Git {
     }
 }
 
-#[derive(Deserialize, Debug, Default, Clone)]
+#[derive(Deserialize)]
 pub struct RepoItem {
     pub name: String,
     pub sha: String,
@@ -118,7 +118,6 @@ impl RepoItem {
             move |downloaded, size| {
                 pb.set_length(size);
                 pb.set_position(downloaded);
-                // pb.with_finish(indicatif::ProgressFinish::AndClear);
             },
         )?;
         Ok(target_path)

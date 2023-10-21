@@ -439,6 +439,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "dialoguer"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "658bce805d770f407bc62102fca7c2c64ceef2fbcb2b8bd19d2765ce093980de"
+dependencies = [
+ "console",
+ "shell-words",
+ "tempfile",
+ "thiserror",
+ "zeroize",
+]
+
+[[package]]
 name = "either"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -479,6 +492,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 
 [[package]]
+name = "errno"
+version = "0.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac3e13f66a2f95e32a39eaa81f6b95d42878ca0e1db0c7543723dfe12557e860"
+dependencies = [
+ "libc",
+ "windows-sys 0.48.0",
+]
+
+[[package]]
 name = "exr"
 version = "1.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -493,6 +516,12 @@ dependencies = [
  "smallvec",
  "zune-inflate",
 ]
+
+[[package]]
+name = "fastrand"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "25cbce373ec4653f1a01a31e8a5e5ec0c622dc27ff9c4e6606eefef5cbbed4a5"
 
 [[package]]
 name = "fdeflate"
@@ -577,18 +606,22 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap 4.4.6",
+ "dialoguer",
+ "fs_extra",
  "indicatif",
  "lazy_static",
  "log",
  "minreq",
  "normpath",
  "rayon",
+ "regex",
  "serde",
  "serde_json",
  "serde_yaml",
  "stderrlog",
  "sysinfo",
  "thiserror",
+ "whoami",
 ]
 
 [[package]]
@@ -895,6 +928,12 @@ dependencies = [
  "cc",
  "winapi",
 ]
+
+[[package]]
+name = "linux-raw-sys"
+version = "0.4.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da2479e8c062e40bf0066ffa0bc823de0a9368974af99c9f6df941d2c231e03f"
 
 [[package]]
 name = "lock_api"
@@ -1258,6 +1297,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
 
 [[package]]
+name = "rustix"
+version = "0.38.20"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "67ce50cb2e16c2903e30d1cbccfd8387a74b9d4c938b6a4c5ec6cc7556f7a8a0"
+dependencies = [
+ "bitflags 2.4.0",
+ "errno",
+ "libc",
+ "linux-raw-sys",
+ "windows-sys 0.48.0",
+]
+
+[[package]]
 name = "rustls"
 version = "0.21.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1428,6 +1480,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "shell-words"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "24188a676b6ae68c3b2cb3a01be17fbf7240ce009799bb56d5b1409051e78fde"
+
+[[package]]
 name = "shlex"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1542,6 +1600,19 @@ dependencies = [
  "once_cell",
  "rayon",
  "winapi",
+]
+
+[[package]]
+name = "tempfile"
+version = "3.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb94d2f3cc536af71caac6b6fcebf65860b347e7ce0cc9ebe8f70d3e521054ef"
+dependencies = [
+ "cfg-if 1.0.0",
+ "fastrand",
+ "redox_syscall",
+ "rustix",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
@@ -1777,6 +1848,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "whoami"
+version = "1.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "22fc3756b8a9133049b26c7f61ab35416c130e8c09b660f5b3958b446f52cc50"
+dependencies = [
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
 name = "wild"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1956,6 +2037,12 @@ name = "windows_x86_64_msvc"
 version = "0.48.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed94fce61571a4006852b7389a063ab983c02eb1bb37b47f8272ce92d06d9538"
+
+[[package]]
+name = "zeroize"
+version = "1.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2a0956f1ba7c7909bfb66c2e9e4124ab6f6482560f6628b5aaeba39207c9aad9"
 
 [[package]]
 name = "zune-inflate"
