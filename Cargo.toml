@@ -1,5 +1,12 @@
 [workspace]
 
 members = [
-    "Scaffold","Watcher","TexGen"
+    "Scaffold","Watcher","TexGen","GBT"
 ]
+
+
+# [profile.release]
+# opt-level = "s"
+# strip = "debuginfo"
+# debug = false
+# lto = true
