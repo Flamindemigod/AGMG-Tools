@@ -12,10 +12,9 @@ use std::{
 
 use crate::{
     get_confirm,
-    modules::config::ProjectType,
+    modules::{config::ProjectType, dds::{generate_tex_split, gen_hash_tex_unit}},
     utils::{
         copy::copy,
-        dds::generate_tex_split,
         interactions::{get_input_string, get_input_string_with_validator, get_multi_input},
     },
     CONFIG,
@@ -54,7 +53,7 @@ fn scaffold_model(project_path: PathBuf) -> Result<()> {
                 },
             ));
             let should_symlink = get_confirm!(
-                "Should Symlink Source? (Does Require Admin, or SeCreateSymbolicLinkPrivilege)",
+                "Should Symlink Source? (Requires Admin, or SeCreateSymbolicLinkPrivilege)",
                 false
             );
             copy(&source_path, &project_path.join("Source"), should_symlink)?;
@@ -76,9 +75,49 @@ fn scaffold_model(project_path: PathBuf) -> Result<()> {
             )
         })
         .collect::<HashMap<_, _>>();
-    info!("All Texture Units Generated");
-    CONFIG.lock().unwrap().textures = tex_units;
+    info!("All Model Texture Units Generated");
+    CONFIG.lock().unwrap().model_textures = tex_units;
+    Ok(())
+}
 
+fn scaffold_textures(project_path: PathBuf) -> Result<()> {
+    let source_path = PathBuf::from(get_input_string_with_validator(
+        "Path to your Textures",
+        None,
+        |input: &String| -> Result<(), &str> {
+            if PathBuf::from(input).exists() {
+                Ok(())
+            } else {
+                Err("Path does not exist. Enter a Valid Path")
+            }
+        },
+    ));
+    let should_symlink = get_confirm!(
+        "Should Symlink Source? (Requires Admin, or SeCreateSymbolicLinkPrivilege)",
+        false
+    );
+    copy(&source_path, &project_path.join("Source"), should_symlink)?;
+    let files: Vec<_> = source_path
+        .read_dir()
+        .unwrap()
+        .map(|f| f.unwrap().path())
+        .collect();
+
+    // gen_hash_tex_unit
+    let re = Regex::new(r"^([0-9a-fA-F]{8})-(.+)\.dds$").unwrap();
+    let tex_units = files
+        .par_iter()
+        .filter(|f| re.is_match(f.file_name().unwrap().to_str().unwrap()))
+        .map(|f| {
+            (
+                f.file_stem().unwrap().to_str().unwrap().to_string().split("-").collect::<Vec<_>>()[0].to_owned(),
+                gen_hash_tex_unit(f.to_path_buf(), project_path.join("Textures"))
+                    .expect("Failed to Generate Texture Unit"),
+            )
+        })
+        .collect::<HashMap<_, _>>();
+    info!("All Model Texture Units Generated");
+    CONFIG.lock().unwrap().texture_textures = tex_units;
     Ok(())
 }
 
@@ -151,12 +190,13 @@ pub fn scaffold(project_path: PathBuf) {
     for project_type in types {
         match project_type {
             ProjectType::Model => {
-                scaffold_model(project_path.clone()).expect("Failed to Work with Model Scaffolding")
+                scaffold_model(project_path.clone()).expect("Failed to Complete Model Scaffolding")
             }
-            ProjectType::Texture => (),
+            ProjectType::Texture => scaffold_textures(project_path.clone())
+                .expect("Failed to Complete Texture Scaffolding"),
             ProjectType::Shader => (),
         }
     }
-
+    info!("Project Successfully Scaffolded");
     CONFIG.lock().unwrap().save_project_conf(Some(project_path));
 }

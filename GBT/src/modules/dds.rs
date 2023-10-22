@@ -149,3 +149,28 @@ pub fn build_from_tex_unit(tex_unit: TexUnit, output_file_path: PathBuf) -> Resu
     out_dds.write(&mut writer).unwrap();
     Ok(())
 }
+
+pub fn gen_hash_tex_unit(source_dds: PathBuf, target_folder: PathBuf) -> Result<TexUnit>{
+    info!("Generating Texture Unit for {:}", &source_dds.file_name().unwrap().to_str().unwrap());
+    fs::create_dir_all(&target_folder)?;
+    let filename = source_dds
+        .file_stem()
+        .expect("Failed to get Filename")
+        .to_str()
+        .expect("Failed to parse str")
+        .to_string();    
+
+    let mut reader = File::open(&source_dds).expect("Failed to Open Image");
+    let dds = ddsfile::Dds::read(&mut reader).unwrap();
+    let image: RgbaImage = image_dds::image_from_dds(&dds, 0).unwrap();
+    let format = DDSFormat::from(dds_image_format(&dds).expect("Failed to Get DDS Format"));
+    let target_file_path = target_folder.join(format!("{:}.png", filename.split_terminator("-").next().unwrap()));
+    
+    image.save(target_file_path.clone())?;
+    
+    let tex_unit = TexUnit {
+        encoding: format,
+        paths: vec![target_file_path].into(),
+    };
+    Ok(tex_unit)
+}
