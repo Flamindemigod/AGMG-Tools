@@ -22,7 +22,7 @@ fn symlink(source: &PathBuf, target: &PathBuf) -> Result<()> {
     Ok(())
 }
 
-fn copy(source: &PathBuf, target: &PathBuf, should_symlink: bool) -> Result<()> {
+pub fn copy(source: &PathBuf, target: &PathBuf, should_symlink: bool) -> Result<()> {
     if should_symlink {
         symlink(source, target)?;
     }

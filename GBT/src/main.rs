@@ -1,13 +1,13 @@
 mod modules;
 pub mod utils;
 
-use std::{path::PathBuf, sync::{Arc, Mutex}};
+use std::{path::PathBuf, sync::Mutex};
 use clap::{Parser, Subcommand, Args};
 use lazy_static::lazy_static;
 use log::*;
 use modules::{*, config::Config};
 
-use crate::modules::{git::Git, config::does_config_exist};
+use crate::modules::config::does_config_exist;
 
 lazy_static!(
     pub static ref CONFIG:Mutex<Config> = Mutex::new(config::Config::default());
@@ -33,7 +33,6 @@ struct InitBranch {
 
 #[derive(Args, Debug, Clone)]
 struct RunBranch {
-    // #[arg(try_get_matches_from = ["resx"])]
     /// Path to Where you want the project to Initialize
     script: String
 }
@@ -68,7 +67,6 @@ fn main() {
 
     std_err.init().unwrap();
 
-    info!("{cli:#?}");
     if does_config_exist(){
         CONFIG.lock().unwrap().load_project_conf();
     }
@@ -78,16 +76,5 @@ fn main() {
         Branches::Run => trace!("In Run"),
         Branches::Test => trace!("In Test"),
         Branches::Clean => trace!("In Clean"),
-        _ => unreachable!("How'd You get here")
     }
-
-    // let url = "https://github.com/SilentNightSound/GI-Model-Importer-Assets/tree/main/SkillData/FoxPole";
-    // let path = PathBuf::from(url);
-    // let git = Git::default().load(&path).unwrap();
-
-    // match git.download(PathBuf::from("./Testing")){
-    //     Ok(_) => todo!(""),
-    //     Err(e) => error!("{:#?}", e),
-    // }
-
 }

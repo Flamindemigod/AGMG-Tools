@@ -606,9 +606,13 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap 4.4.6",
+ "ddsfile",
  "dialoguer",
  "fs_extra",
+ "image",
+ "image_dds",
  "indicatif",
+ "itertools",
  "lazy_static",
  "log",
  "minreq",
