@@ -1,4 +1,3 @@
-use anyhow::Error;
 use dialoguer::{theme::ColorfulTheme, Input, InputValidator, MultiSelect, Confirm};
 
 pub fn get_input_string_with_validator<V>(
