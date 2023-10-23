@@ -1,46 +1,72 @@
 mod modules;
 pub mod utils;
 
-use std::{path::PathBuf, sync::Mutex};
-use clap::{Parser, Subcommand, Args};
+use clap::{Args, Parser, Subcommand};
 use lazy_static::lazy_static;
 use log::*;
-use modules::{*, config::Config};
+use modules::{config::Config, *};
+use std::{path::PathBuf, sync::Mutex, process::exit};
 
 use crate::modules::config::does_config_exist;
 
-lazy_static!(
-    pub static ref CONFIG:Mutex<Config> = Mutex::new(config::Config::default());
-);
-
+lazy_static! {
+    pub static ref CONFIG: Mutex<Config> = {
+        let mut config = config::Config::default();
+        if does_config_exist() {
+            config.load_project_conf();
+        }
+        Mutex::new(config)
+    };
+}
 
 #[derive(Subcommand, Debug, Clone)]
 enum Branches {
     Init(InitBranch),
-    Run, 
+    Run,
     Test,
     Clean,
-} 
-
-
+    #[command(hide = true)]
+    Build(BuildBranch),
+    #[command(hide = true)]
+    Watch(WatchBranch),
+}
 
 #[derive(Args, Debug, Clone)]
 struct InitBranch {
     #[arg(default_value = ".")]
     /// Path to Where you want the project to Initialize
-    project_path: PathBuf
+    project_path: PathBuf,
 }
+
+
 
 #[derive(Args, Debug, Clone)]
 struct RunBranch {
     /// Path to Where you want the project to Initialize
-    script: String
+    script: String,
 }
+
+
+#[derive(Args, Debug, Clone)]
+struct BuildBranch {
+    /// Force Rebuild
+    #[arg(short, default_value_t=false)]
+    force: bool,
+}
+
+
+
+#[derive(Args, Debug, Clone)]
+struct WatchBranch {
+    /// Command String to Execute
+    command_string: String,
+}
+
 
 
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
-struct CLI{
+struct CLI {
     /// Main Command To Execute
     #[command(subcommand)]
     main_command: Branches,
@@ -48,7 +74,7 @@ struct CLI{
     /// Debug mode (-d, -dd, -ddd, etc)
     #[arg(short, action=clap::ArgAction::Count)]
     debug: u8,
-    
+
     #[cfg(feature = "timestamps")]
     /// Timestamp (sec, ms, ns, none)
     #[arg(short, long = "timestamp")]
@@ -57,24 +83,29 @@ struct CLI{
 
 
 fn main() {
-   
     let cli = CLI::parse();
+    if !CONFIG.lock().unwrap().valid_exe(){
+        error!("Exe Validation Failed. Exiting");
+        exit(1);
+    }
     let mut std_err = stderrlog::new();
-    std_err.module(module_path!()).verbosity(usize::from(cli.debug));
+    std_err
+        .module(module_path!())
+        .verbosity(usize::from(cli.debug));
 
     #[cfg(feature = "timestamps")]
     std_err.timestamp(cli.ts.unwrap_or(stderrlog::Timestamp::Off));
 
     std_err.init().unwrap();
 
-    if does_config_exist(){
-        CONFIG.lock().unwrap().load_project_conf();
-    }
+  
 
     match cli.main_command {
         Branches::Init(init) => scaffold::scaffold(init.project_path),
-        Branches::Run => trace!("In Run"),
+        Branches::Run => loop{println!("In Loop")},
         Branches::Test => trace!("In Test"),
         Branches::Clean => trace!("In Clean"),
+        Branches::Build(build) => build!(build.force),
+        Branches::Watch(watch) => trace!("In Watch {:#?}", watch.command_string),
     }
 }

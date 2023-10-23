@@ -1,7 +1,10 @@
 use anyhow::Result;
+use derivative::Derivative;
 use image_dds::ImageFormat;
+use lazy_static::lazy_static;
 use log::{error, info, trace};
 use serde::{Deserialize, Serialize};
+
 use std::{
     collections::{HashMap, HashSet},
     fs::File,
@@ -10,6 +13,8 @@ use std::{
     str::FromStr,
     sync::Arc,
 };
+
+use crate::utils::exec_validation::Exectuable;
 
 #[derive(Serialize, Deserialize, Hash, PartialEq, Eq, Debug, Clone)]
 pub enum ProjectType {
@@ -114,8 +119,24 @@ pub struct TexUnit {
     pub encoding: DDSFormat,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Default, Clone)]
+lazy_static! {
+    static ref DEFAULT_SCRIPTS: HashMap<String, String> = {
+        let mut m = HashMap::new();
+        m.insert("build".to_string(), "$self build".to_string());
+        m.insert("watch".to_string(), "$self watch".to_string());
+        m
+    };
+    static ref DEFAULT_EXE: Exectuable = Exectuable::new();
+}
+
+
+#[derive(Derivative, Serialize, Deserialize)]
+#[derivative(PartialEq, Debug, Default, Clone)]
 pub struct Config {
+    #[serde(skip)]
+    #[derivative(Default(value = "DEFAULT_EXE.clone()"))]
+    pub execute: Exectuable,
+
     // Based on User Input
     #[serde(rename = "Project Name")]
     pub project_name: String,
@@ -123,8 +144,9 @@ pub struct Config {
     pub authors: HashSet<Arc<str>>,
     #[serde(rename = "3DMigoto Path")]
     pub migoto_path: Option<PathBuf>,
-    
+
     #[serde(rename = "Scripts")]
+    #[derivative(Default(value = "DEFAULT_SCRIPTS.clone()"))]
     pub scripts: HashMap<String, String>,
 
     #[serde(rename = "Project Type")]
@@ -140,6 +162,10 @@ pub struct Config {
 }
 
 impl Config {
+    pub fn valid_exe(&self) -> bool{
+        return Exectuable::new().eq(&self.execute)
+    }
+  
     pub fn load_project_conf(&mut self) {
         trace!("Attempting to Load Config");
         let mut reader = File::open("./Config.yml").expect("Failed to Open Config File");
@@ -147,7 +173,10 @@ impl Config {
         reader
             .read_to_string(&mut buf)
             .expect("Failed to Read File");
-        self.clone_from(&serde_yaml::from_str(&buf).expect("Failed to Parse Config"));
+      
+        let new_conf = serde_yaml::from_str::<Config>(&buf).expect("Failed to Parse Config");
+        self.clone_from(&new_conf);
+        self.execute=DEFAULT_EXE.clone();
         info!("Config Successfully Loaded");
     }
 

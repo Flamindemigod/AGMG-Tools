@@ -1,5 +1,4 @@
 use std::{fs::{File, self}, io::BufWriter, path::PathBuf};
-
 use anyhow::Result;
 use image::{GrayImage, Luma, RgbaImage};
 use image_dds::{dds_from_image, dds_image_format};
@@ -80,9 +79,9 @@ pub fn generate_tex_split(source_dds: PathBuf, target_folder: PathBuf) -> Result
         target_file_name.push_str("Alpha");
         target_file_name.push_str(".png");
         let alpha = &rgba[3];
-        let target_file_path = target_folder.clone().join(target_file_name);
+        let target_file_path = target_folder.clone().join(&target_file_name);
         alpha.save(target_file_path.clone())?;
-        files.push(target_file_path.clone());
+        files.push(PathBuf::from("./Textures").join(target_file_name));
         drop(target_file_path);
     }
     let mut target_file_name = "".to_owned();
@@ -91,9 +90,9 @@ pub fn generate_tex_split(source_dds: PathBuf, target_folder: PathBuf) -> Result
     target_file_name.push_str(".png");
     rgba[3].pixels_mut().for_each(|p| p[0] = 255);
     image.join_channels(rgba);
-    let target_file_path = target_folder.clone().join(target_file_name);
+    let target_file_path = target_folder.clone().join(&target_file_name);
     image.save(target_file_path.clone())?;
-    files.push(target_file_path.clone());
+    files.push(PathBuf::from("./Textures").join(target_file_name));
     drop(target_file_path);
 
     let tex_unit = TexUnit {
@@ -105,16 +104,17 @@ pub fn generate_tex_split(source_dds: PathBuf, target_folder: PathBuf) -> Result
 }
 
 pub fn build_from_tex_unit(tex_unit: TexUnit, output_file_path: PathBuf) -> Result<()> {
+    info!("Building From Texture Unit\n {:#?}", &tex_unit);
     let mut flat = tex_unit
         .paths
         .par_iter()
         .filter(|f| {
-            f.file_stem()
+            !f.file_stem()
                 .unwrap()
                 .to_str()
                 .unwrap()
                 .to_string()
-                .contains("Flat")
+                .contains("Alpha")
         })
         .map(|f| image::open(f).unwrap().to_rgba8())
         .collect::<Vec<_>>()
@@ -143,12 +143,15 @@ pub fn build_from_tex_unit(tex_unit: TexUnit, output_file_path: PathBuf) -> Resu
         tex_unit.encoding.into(),
         image_dds::Quality::Slow,
         image_dds::Mipmaps::Disabled,
-    )
-    .unwrap();
-    let mut writer = BufWriter::new(File::create(output_file_path)?);
-    out_dds.write(&mut writer).unwrap();
+    )?;
+    info!("Finished Building. Exporting to {:#?}", output_file_path);
+    let mut writer = BufWriter::new(File::create(&output_file_path)?);
+    out_dds.write(&mut writer)?;
     Ok(())
 }
+
+
+
 
 pub fn gen_hash_tex_unit(source_dds: PathBuf, target_folder: PathBuf) -> Result<TexUnit>{
     info!("Generating Texture Unit for {:}", &source_dds.file_name().unwrap().to_str().unwrap());
@@ -164,13 +167,14 @@ pub fn gen_hash_tex_unit(source_dds: PathBuf, target_folder: PathBuf) -> Result<
     let dds = ddsfile::Dds::read(&mut reader).unwrap();
     let image: RgbaImage = image_dds::image_from_dds(&dds, 0).unwrap();
     let format = DDSFormat::from(dds_image_format(&dds).expect("Failed to Get DDS Format"));
-    let target_file_path = target_folder.join(format!("{:}.png", filename.split_terminator("-").next().unwrap()));
+    let target_file_name = format!("{:}.png", filename.split_terminator("-").next().unwrap());
+    let target_file_path = target_folder.join(&target_file_name);
     
     image.save(target_file_path.clone())?;
     
     let tex_unit = TexUnit {
         encoding: format,
-        paths: vec![target_file_path].into(),
+        paths: vec![PathBuf::from("./Textures").join(target_file_name)].into(),
     };
     Ok(tex_unit)
 }
