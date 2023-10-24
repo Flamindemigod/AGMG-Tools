@@ -4,8 +4,9 @@ pub mod utils;
 use clap::{Args, Parser, Subcommand};
 use lazy_static::lazy_static;
 use log::*;
-use modules::{config::Config, *};
-use std::{path::PathBuf, sync::Mutex, process::exit};
+use modules::{config::Config, *, watcher::watch};
+use utils::test::test;
+use std::{path::PathBuf, process::exit, sync::Mutex};
 
 use crate::modules::config::does_config_exist;
 
@@ -23,12 +24,12 @@ lazy_static! {
 enum Branches {
     Init(InitBranch),
     Run,
-    Test,
     Clean,
+    Test,
     #[command(hide = true)]
     Build(BuildBranch),
     #[command(hide = true)]
-    Watch(WatchBranch),
+    Watch,
 }
 
 #[derive(Args, Debug, Clone)]
@@ -38,28 +39,17 @@ struct InitBranch {
     project_path: PathBuf,
 }
 
-
-
 #[derive(Args, Debug, Clone)]
 struct RunBranch {
     /// Path to Where you want the project to Initialize
     script: String,
 }
 
-
 #[derive(Args, Debug, Clone)]
 struct BuildBranch {
     /// Force Rebuild
-    #[arg(short, default_value_t=false)]
+    #[arg(short, default_value_t = false)]
     force: bool,
-}
-
-
-
-#[derive(Args, Debug, Clone)]
-struct WatchBranch {
-    /// Command String to Execute
-    command_string: String,
 }
 
 
@@ -81,10 +71,9 @@ struct CLI {
     ts: Option<stderrlog::Timestamp>,
 }
 
-
 fn main() {
     let cli = CLI::parse();
-    if !CONFIG.lock().unwrap().valid_exe(){
+    if !CONFIG.lock().unwrap().valid_exe() {
         error!("Exe Validation Failed. Exiting");
         exit(1);
     }
@@ -97,15 +86,25 @@ fn main() {
     std_err.timestamp(cli.ts.unwrap_or(stderrlog::Timestamp::Off));
 
     std_err.init().unwrap();
-
-  
+    
 
     match cli.main_command {
         Branches::Init(init) => scaffold::scaffold(init.project_path),
-        Branches::Run => loop{println!("In Loop")},
-        Branches::Test => trace!("In Test"),
+        Branches::Run => {
+            use std::{thread, time};
+            let mut i = 0;
+            print!("{:}", i);
+            loop {
+                i+=1;
+                println!("{:}", i);
+                thread::sleep(time::Duration::from_secs(2));
+                if i == 20{
+                    break;
+                }
+        }},
+        Branches::Test => test(),
         Branches::Clean => trace!("In Clean"),
         Branches::Build(build) => build!(build.force),
-        Branches::Watch(watch) => trace!("In Watch {:#?}", watch.command_string),
+        Branches::Watch => watch(),
     }
 }

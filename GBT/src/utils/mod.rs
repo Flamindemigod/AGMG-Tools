@@ -5,3 +5,4 @@ pub mod download;
 pub mod interactions;
 pub mod copy;
 pub mod exec_validation;
+pub mod test;
