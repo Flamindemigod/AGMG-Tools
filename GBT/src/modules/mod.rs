@@ -4,3 +4,4 @@ pub mod git;
 mod dds;
 pub mod watcher;
 pub mod build;
+pub mod script;

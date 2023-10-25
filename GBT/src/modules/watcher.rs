@@ -2,10 +2,9 @@ use crate::CONFIG;
 
 use super::config::does_config_exist;
 use file_diff::diff;
-use log::{error, trace};
+use log::{error, info, trace};
 use notify_debouncer_full::{new_debouncer, notify::*};
 use rayon::prelude::*;
-use serde::Deserialize;
 use serde_json;
 use std::{
     collections::HashSet,
@@ -17,7 +16,6 @@ use std::{
 
 fn paths(files: &mut Vec<String>, paths: &Vec<PathBuf>) -> Option<PathBuf> {
     for path in paths {
-        trace!("Checking Path: {:#?}", path);
         let is_match = files.par_iter().any(|file| {
             if diff(path.to_str().unwrap(), file.as_str()) {
                 return true;
@@ -29,6 +27,7 @@ fn paths(files: &mut Vec<String>, paths: &Vec<PathBuf>) -> Option<PathBuf> {
                 CONFIG.lock().unwrap().load_project_conf();
                 build_watch_files(files);
             }
+            trace!("matched: {:#?}", path);
             return Some(path.to_path_buf());
         }
     }
@@ -36,6 +35,7 @@ fn paths(files: &mut Vec<String>, paths: &Vec<PathBuf>) -> Option<PathBuf> {
 }
 
 fn build_watch_files(files: &mut Vec<String>) {
+    info!("Building Watch Files");
     *files = vec![];
     files.push("./Config.yml".to_owned());
     let mut tex = CONFIG
@@ -59,6 +59,7 @@ fn build_watch_files(files: &mut Vec<String>) {
         .map(|path| path.to_str().unwrap().to_owned())
         .collect::<Vec<_>>();
     files.append(&mut tex);
+    info!("Watch Files Built");
 }
 
 pub fn watch() {
@@ -66,7 +67,7 @@ pub fn watch() {
         error!("Config does not exist in current directory. Exiting");
         exit(1);
     }
-
+    info!("Initializing Watcher");
     let mut watched_files = vec![];
     build_watch_files(&mut watched_files);
 
@@ -91,7 +92,6 @@ pub fn watch() {
             Ok(events) => events
                 .iter()
                 .map(|event| {
-                    trace!("{event:#?}");
                     paths(&mut watched_files, &event.paths)
                 })
                 .filter(|f| f.is_some())
