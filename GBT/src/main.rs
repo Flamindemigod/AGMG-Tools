@@ -1,15 +1,21 @@
 mod modules;
 pub mod utils;
 
-use clap::{builder::styling, Args, Command, Error, FromArgMatches, Parser, Subcommand};
+use clap::{Args, Command, Error, FromArgMatches, Parser, Subcommand};
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use log::*;
 use modules::{config::Config, watcher::watch, *};
 use std::{path::PathBuf, process::exit, sync::Mutex};
-use utils::test::test;
+use utils::{test::test, version::Version};
+use once_cell::sync::Lazy;
+use crate::modules::{config::does_config_exist, script::run_script};
 
-use crate::modules::config::does_config_exist;
+static VERSION: Lazy<Version> = Lazy::new(|| {
+    Version::from_str(env!("CARGO_PKG_VERSION")).unwrap()
+});
+
+
 
 lazy_static! {
     pub static ref CONFIG: Mutex<Config> = {
@@ -32,14 +38,16 @@ enum Branches {
     // #[command(hide = true, hide_possible_values=true)]
     Build(BuildBranch),
     /// Used to Watch Updates To Files (For Script Use)
-    #[command(hide = true, hide_possible_values=true)]
+    #[command(hide = true, hide_possible_values = true)]
     Watch,
     /// Used to Generate Ini for Mod
     // #[command(hide = true, hide_possible_values=true)]
     GenIni,
     /// Used Link Mod to 3DMigoto
     // #[command(hide = true, hide_possible_values=true)]
-    Link
+    Link(LinkBranch),
+    /// Check for Updates and Update if Available
+    Update,
 }
 
 #[derive(Args, Debug, Clone)]
@@ -85,14 +93,14 @@ fn string_to_static_str(s: String) -> &'static str {
 
 impl Subcommand for RunBranch {
     fn augment_subcommands(cmd: clap::Command) -> clap::Command {
-        let styles = styling::Styles::styled()
-            .header(styling::AnsiColor::Green.on_default() | styling::Effects::BOLD)
-            .usage(styling::AnsiColor::Green.on_default() | styling::Effects::BOLD)
-            .literal(styling::AnsiColor::Blue.on_default() | styling::Effects::BOLD)
-            .placeholder(styling::AnsiColor::Cyan.on_default());
-        let mut new_cmd = cmd.styles(styles);
+        let mut new_cmd = cmd;
         let binding = CONFIG.lock().unwrap().clone();
-        let scripts = binding.scripts.keys().sorted().collect_vec().to_owned();
+        let scripts = binding
+            .scripts_parsed
+            .keys()
+            .sorted()
+            .collect_vec()
+            .to_owned();
         for script in scripts {
             let s_slice: &str = string_to_static_str(script.clone());
             new_cmd = new_cmd.subcommand(Command::new(s_slice));
@@ -100,12 +108,7 @@ impl Subcommand for RunBranch {
         new_cmd
     }
     fn augment_subcommands_for_update(cmd: clap::Command) -> clap::Command {
-        let styles = styling::Styles::styled()
-            .header(styling::AnsiColor::Green.on_default() | styling::Effects::BOLD)
-            .usage(styling::AnsiColor::Green.on_default() | styling::Effects::BOLD)
-            .literal(styling::AnsiColor::Blue.on_default() | styling::Effects::BOLD)
-            .placeholder(styling::AnsiColor::Cyan.on_default());
-        let mut new_cmd = cmd.styles(styles);
+        let mut new_cmd = cmd;
         let binding = CONFIG.lock().unwrap().clone();
         let scripts = binding.scripts.keys().sorted().collect_vec().to_owned();
         for script in scripts {
@@ -116,7 +119,7 @@ impl Subcommand for RunBranch {
     }
     fn has_subcommand(name: &str) -> bool {
         let binding = CONFIG.lock().unwrap().clone();
-        let scripts = binding.scripts.keys().collect_vec().to_owned();
+        let scripts = binding.scripts_parsed.keys().collect_vec().to_owned();
         scripts.iter().any(|f| name == f.as_str())
     }
 }
@@ -126,6 +129,13 @@ struct BuildBranch {
     /// Force Rebuild
     #[arg(short, default_value_t = false)]
     force: bool,
+}
+
+#[derive(Args, Debug, Clone)]
+struct LinkBranch {
+    /// Use Symlink
+    #[arg(short, long, default_value_t = false)]
+    symlink: bool,
 }
 
 #[derive(Parser, Debug)]
@@ -163,14 +173,13 @@ fn main() {
 
     match cli.main_command {
         Branches::Init(init) => scaffold::scaffold(init.project_path),
-        Branches::Run(script) => {
-            trace!("In Run {:#?}", script.script)
-        }
+        Branches::Run(script) => run_script(script.script),
         Branches::Test => test(),
         Branches::Clean => trace!("In Clean"),
         Branches::Build(build) => build!(build.force),
         Branches::Watch => watch(),
-        Branches::GenIni => (),
-        Branches::Link => ()
+        Branches::GenIni => gen_ini::gen_ini(),
+        Branches::Link(link) => linker::link(link.symlink),
+        Branches::Update => (),
     }
 }

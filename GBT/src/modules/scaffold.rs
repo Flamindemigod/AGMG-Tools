@@ -37,7 +37,7 @@ fn scaffold_model(project_path: PathBuf) -> Result<()> {
             files = Git::default()
                 .load(&PathBuf::from(git_asset_url))
                 .unwrap()
-                .download(project_path.clone().join("Source"))
+                .download(project_path.clone().join("Source/Model"))
                 .expect("Download Failed. Make sure you providing the path to a specific Asset");
         }
         false => {
@@ -56,7 +56,7 @@ fn scaffold_model(project_path: PathBuf) -> Result<()> {
                 "Should Symlink Source? (Requires Admin, or SeCreateSymbolicLinkPrivilege)",
                 false
             );
-            copy(&source_path, &project_path.join("Source"), should_symlink)?;
+            copy(&source_path, &project_path.join("Source/Model"), should_symlink)?;
             files = source_path
                 .read_dir()
                 .unwrap()
@@ -70,7 +70,7 @@ fn scaffold_model(project_path: PathBuf) -> Result<()> {
         .map(|f| {
             (
                 f.file_stem().unwrap().to_str().unwrap().to_string(),
-                generate_tex_split(f.to_path_buf(), project_path.join("Textures"))
+                generate_tex_split(f.to_path_buf(), &project_path, &PathBuf::from("./Textures/Model"))
                     .expect("Failed to Generate Texture Unit"),
             )
         })
@@ -96,7 +96,7 @@ fn scaffold_textures(project_path: PathBuf) -> Result<()> {
         "Should Symlink Source? (Requires Admin, or SeCreateSymbolicLinkPrivilege)",
         false
     );
-    copy(&source_path, &project_path.join("Source"), should_symlink)?;
+    copy(&source_path, &project_path.join("Source/Texture"), should_symlink)?;
     let files: Vec<_> = source_path
         .read_dir()
         .unwrap()
@@ -111,7 +111,7 @@ fn scaffold_textures(project_path: PathBuf) -> Result<()> {
         .map(|f| {
             (
                 f.file_stem().unwrap().to_str().unwrap().to_string().split("-").collect::<Vec<_>>()[0].to_owned(),
-                gen_hash_tex_unit(f.to_path_buf(), project_path.join("Textures"))
+                gen_hash_tex_unit(f.to_path_buf(), &project_path, &PathBuf::from("./Textures/Texture"))
                     .expect("Failed to Generate Texture Unit"),
             )
         })

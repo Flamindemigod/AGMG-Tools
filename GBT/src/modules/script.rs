@@ -12,7 +12,7 @@ use std::{
 };
 use subprocess::{Popen, PopenConfig};
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq)]
 enum Operator {
     // Pipe Child Stdout into Next Child and Run New Child.
     // Pipe_Trigger, // |~|
@@ -46,7 +46,7 @@ impl Operator {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct ScriptParser {
     command: String,
     args: Vec<String>,
@@ -210,6 +210,7 @@ fn run_or(command: Vec<&str>, segment: &ScriptParser) {
 
 impl Run for ScriptParser {
     fn run(&self) {
+        trace!("Running");
         let exectuable = Exectuable::new();
         let mut command = vec![if self.command == "$self" {
             if exectuable.eq(&CONFIG.lock().unwrap().execute) {
@@ -220,6 +221,7 @@ impl Run for ScriptParser {
         } else {
             self.command.as_str()
         }];
+
         let mut args: Vec<_> = self.args.iter().map(|f| f.as_str()).collect();
         command.append(&mut args);
         match self.operator {
@@ -261,4 +263,9 @@ impl Run for ScriptParser {
             }
         }
     }
+}
+
+pub fn run_script(script: String) {
+    let parser = CONFIG.lock().unwrap().scripts_parsed.get(&script).unwrap().to_owned();
+    parser.run();
 }

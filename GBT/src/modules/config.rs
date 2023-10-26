@@ -16,6 +16,8 @@ use std::{
 
 use crate::utils::exec_validation::Exectuable;
 
+use super::script::ScriptParser;
+
 #[derive(Serialize, Deserialize, Hash, PartialEq, Eq, Debug, Clone)]
 pub enum ProjectType {
     Model,
@@ -122,8 +124,8 @@ pub struct TexUnit {
 lazy_static! {
     static ref DEFAULT_SCRIPTS: HashMap<String, String> = {
         let mut m = HashMap::new();
-        m.insert("build".to_string(), "$self build".to_string());
-        m.insert("watch".to_string(), "$self watch".to_string());
+        m.insert("build".to_string(), "$self build && $self gen-ini && $self link".to_string());
+        m.insert("watch".to_string(), "$self watch | $self run build".to_string());
         m
     };
     static ref DEFAULT_EXE: Exectuable = Exectuable::new();
@@ -148,6 +150,9 @@ pub struct Config {
     #[serde(rename = "Scripts")]
     #[derivative(Default(value = "DEFAULT_SCRIPTS.clone()"))]
     pub scripts: HashMap<String, String>,
+
+    #[serde(skip)]
+    pub scripts_parsed: HashMap<String, ScriptParser>,
 
     #[serde(rename = "Project Type")]
     pub project_type: HashSet<ProjectType>,
@@ -177,7 +182,8 @@ impl Config {
         let new_conf = serde_yaml::from_str::<Config>(&buf).expect("Failed to Parse Config");
         self.clone_from(&new_conf);
         self.execute=DEFAULT_EXE.clone();
-        info!("Config Successfully Loaded");
+        self.scripts_parsed = self.scripts.iter().map(|(key, val)| (key.to_owned(), ScriptParser::from_str(val.as_str()).unwrap())).collect();
+        trace!("Config: {:#?}", self);
     }
 
     pub fn save_project_conf(&self, path: Option<PathBuf>) {

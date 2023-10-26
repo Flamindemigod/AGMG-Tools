@@ -57,7 +57,7 @@ impl Compose for RgbaImage {
     }
 }
 
-pub fn generate_tex_split(source_dds: PathBuf, target_folder: PathBuf) -> Result<TexUnit> {
+pub fn generate_tex_split(source_dds: PathBuf,  project_path: &PathBuf, target: &PathBuf) -> Result<TexUnit> {
     info!("Generating Texture Splits for {:}", &source_dds.file_name().unwrap().to_str().unwrap());
     let filename = source_dds
         .file_stem()
@@ -65,7 +65,7 @@ pub fn generate_tex_split(source_dds: PathBuf, target_folder: PathBuf) -> Result
         .to_str()
         .expect("Failed to parse str")
         .to_string();
-    fs::create_dir_all(&target_folder)?;
+    fs::create_dir_all(&project_path.join(target))?;
     let mut reader = File::open(&source_dds).expect("Failed to Open Image");
     let dds = ddsfile::Dds::read(&mut reader).unwrap();
     let mut image: RgbaImage = image_dds::image_from_dds(&dds, 0).unwrap();
@@ -79,9 +79,9 @@ pub fn generate_tex_split(source_dds: PathBuf, target_folder: PathBuf) -> Result
         target_file_name.push_str("Alpha");
         target_file_name.push_str(".png");
         let alpha = &rgba[3];
-        let target_file_path = target_folder.clone().join(&target_file_name);
+        let target_file_path = project_path.join(target).join(&target_file_name);
         alpha.save(target_file_path.clone())?;
-        files.push(PathBuf::from("./Textures").join(target_file_name));
+        files.push(target.join(target_file_name));
         drop(target_file_path);
     }
     let mut target_file_name = "".to_owned();
@@ -90,9 +90,9 @@ pub fn generate_tex_split(source_dds: PathBuf, target_folder: PathBuf) -> Result
     target_file_name.push_str(".png");
     rgba[3].pixels_mut().for_each(|p| p[0] = 255);
     image.join_channels(rgba);
-    let target_file_path = target_folder.clone().join(&target_file_name);
+    let target_file_path =  project_path.join(target).join(&target_file_name);
     image.save(target_file_path.clone())?;
-    files.push(PathBuf::from("./Textures").join(target_file_name));
+    files.push(target.join(target_file_name));
     drop(target_file_path);
 
     let tex_unit = TexUnit {
@@ -153,9 +153,9 @@ pub fn build_from_tex_unit(tex_unit: TexUnit, output_file_path: PathBuf) -> Resu
 
 
 
-pub fn gen_hash_tex_unit(source_dds: PathBuf, target_folder: PathBuf) -> Result<TexUnit>{
+pub fn gen_hash_tex_unit(source_dds: PathBuf, project_path: &PathBuf, target: &PathBuf) -> Result<TexUnit>{
     info!("Generating Texture Unit for {:}", &source_dds.file_name().unwrap().to_str().unwrap());
-    fs::create_dir_all(&target_folder)?;
+    fs::create_dir_all(&project_path.join(target))?;
     let filename = source_dds
         .file_stem()
         .expect("Failed to get Filename")
@@ -168,13 +168,13 @@ pub fn gen_hash_tex_unit(source_dds: PathBuf, target_folder: PathBuf) -> Result<
     let image: RgbaImage = image_dds::image_from_dds(&dds, 0).unwrap();
     let format = DDSFormat::from(dds_image_format(&dds).expect("Failed to Get DDS Format"));
     let target_file_name = format!("{:}.png", filename.split_terminator("-").next().unwrap());
-    let target_file_path = target_folder.join(&target_file_name);
+    let target_file_path = project_path.join(target).join(&target_file_name);
     
     image.save(target_file_path.clone())?;
     
     let tex_unit = TexUnit {
         encoding: format,
-        paths: vec![PathBuf::from("./Textures").join(target_file_name)].into(),
+        paths: vec![target.join(target_file_name)].into(),
     };
     Ok(tex_unit)
 }
