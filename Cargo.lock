@@ -686,7 +686,6 @@ dependencies = [
  "normpath",
  "notify",
  "notify-debouncer-full",
- "once_cell",
  "rayon",
  "regex",
  "serde",

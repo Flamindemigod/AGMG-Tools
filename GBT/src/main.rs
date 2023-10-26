@@ -8,16 +8,11 @@ use log::*;
 use modules::{config::Config, watcher::watch, *};
 use std::{path::PathBuf, process::exit, sync::Mutex};
 use utils::{test::test, version::Version};
-use once_cell::sync::Lazy;
 use crate::modules::{config::does_config_exist, script::run_script};
-
-static VERSION: Lazy<Version> = Lazy::new(|| {
-    Version::from_str(env!("CARGO_PKG_VERSION")).unwrap()
-});
-
 
 
 lazy_static! {
+    pub static ref VERSION: Version = Version::from_str(env!("CARGO_PKG_VERSION")).unwrap();
     pub static ref CONFIG: Mutex<Config> = {
         let mut config = config::Config::default();
         if does_config_exist() {
