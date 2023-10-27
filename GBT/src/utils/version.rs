@@ -1,11 +1,13 @@
-use std::fmt::{Debug, Display, Formatter, Write};
+use std::{fmt::{Debug, Display, Formatter, Write}, env::temp_dir};
 
 use anyhow::Result;
 use indicatif::{ProgressBar, ProgressState, ProgressStyle};
 use log::info;
 use serde_json::Value;
 
-use super::{download::Downloader, exec_validation::Exectuable};
+use crate::utils::exec_validation::Exectuable;
+
+use super::download::Downloader;
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Version {
@@ -37,6 +39,9 @@ impl Version {
     }
 
     pub fn has_update(&self) -> Result<impl Fn() -> Result<()>> {
+           
+        
+        
         let data = minreq::get("https://api.github.com/repos/Flamindemigod/AGMG-Tools/releases/latest").with_header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0. 4389.82 Safari/537.36").send()?.json::<Value>()?;
         let most_recent = Self::from_str(
             data["tag_name"]
@@ -46,18 +51,27 @@ impl Version {
                 .unwrap(),
         )
         .unwrap();
-        let has_update = most_recent.gt(self);
+        let has_update = most_recent > *self;
         let update = move || {
-            if has_update {
+            if !has_update {
                 info!("GBT is up to date");
                 return Ok(());
             }
+            #[cfg(target_os = "windows")]
+            let target_exe = "gbt.exe";
+
+            #[cfg(target_os = "macos")]
+            let target_exe = "gbt-macos-amd64";
+
+            #[cfg(target_os = "linux")]
+            let target_exe = "gbt-linux-amd64";
+
             info!("A new version of GBT is available. Updating");
             let download_uri = data["assets"]
                 .as_array()
                 .unwrap()
                 .iter()
-                .filter(|asset| asset["name"].as_str().unwrap() == "gbt.exe")
+                .filter(|asset| asset["name"].as_str().unwrap() == target_exe)
                 .map(|asset| asset["browser_download_url"].as_str().unwrap())
                 .find(|_| true)
                 .unwrap();
@@ -69,14 +83,17 @@ impl Version {
             .with_key("eta", |state: &ProgressState, w: &mut dyn Write| write!(w, "{:.1}s", state.eta().as_secs_f64()).unwrap())
             .progress_chars("##-");
             pb.set_style(sty);
-
+            let current_exe = Exectuable::new();
+            let download = temp_dir().join(current_exe.path.file_name().unwrap());
+            
             Downloader::new(download_uri).unwrap().download(
-                Exectuable::default().path,
+                download.clone(),
                 move |downloaded, size| {
                     pb.set_length(size);
                     pb.set_position(downloaded);
                 },
             )?;
+            self_replace::self_replace(download)?;
             info!("Update Complete.");
             Ok(())
         };

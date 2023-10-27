@@ -1,7 +1,7 @@
 use std::path::Path;
 use normpath::PathExt;
 use sysinfo::{System, SystemExt, DiskExt};
-
+use log::trace;
 // TODO: support for relative paths
 
 /// Get available free disk space by specified path
@@ -20,6 +20,7 @@ pub fn available(path: impl AsRef<Path>) -> Option<u64> {
         a.cmp(&b).reverse()
     });
 
+    trace!("{:#?}", path.as_ref());
     let path = path.as_ref().parent().unwrap().normalize().unwrap();
     for disk in system.disks() {
         if path.starts_with(disk.mount_point()) {
