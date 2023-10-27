@@ -1,0 +1,213 @@
+use anyhow::Result;
+use derivative::Derivative;
+use image_dds::ImageFormat;
+use lazy_static::lazy_static;
+use log::{error, info, trace};
+use serde::{Deserialize, Serialize};
+
+use std::{
+    collections::{HashMap, HashSet},
+    fs::File,
+    io::{Read, Write},
+    path::PathBuf,
+    str::FromStr,
+    sync::Arc,
+};
+
+use crate::utils::exec_validation::Exectuable;
+
+use super::script::ScriptParser;
+
+#[derive(Serialize, Deserialize, Hash, PartialEq, Eq, Debug, Clone)]
+pub enum ProjectType {
+    Model,
+    Texture,
+    Shader,
+}
+
+impl FromStr for ProjectType {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "3D Model" => Ok(ProjectType::Model),
+            "Texture" => Ok(ProjectType::Texture),
+            "Shader" => Ok(ProjectType::Shader),
+            _ => Err(()),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+pub enum DDSFormat {
+    R8Unorm,
+    R8G8B8A8Unorm,
+    R8G8B8A8Srgb,
+    R32G32B32A32Float,
+    B8G8R8A8Unorm,
+    B8G8R8A8Srgb,
+    BC1Unorm,
+    BC1Srgb,
+    BC2Unorm,
+    BC2Srgb,
+    BC3Unorm,
+    BC3Srgb,
+    BC4Unorm,
+    BC4Snorm,
+    BC5Unorm,
+    BC5Snorm,
+    BC6Ufloat,
+    BC6Sfloat,
+    BC7Unorm,
+    BC7Srgb,
+}
+
+impl From<ImageFormat> for DDSFormat {
+    fn from(value: ImageFormat) -> Self {
+        match value {
+            ImageFormat::R8Unorm => Self::R8Unorm,
+            ImageFormat::R8G8B8A8Unorm => Self::R8G8B8A8Unorm,
+            ImageFormat::R8G8B8A8Srgb => Self::R8G8B8A8Srgb,
+            ImageFormat::R32G32B32A32Float => Self::R32G32B32A32Float,
+            ImageFormat::B8G8R8A8Unorm => Self::B8G8R8A8Unorm,
+            ImageFormat::B8G8R8A8Srgb => Self::B8G8R8A8Srgb,
+            ImageFormat::BC1Unorm => Self::BC1Unorm,
+            ImageFormat::BC1Srgb => Self::BC1Srgb,
+            ImageFormat::BC2Unorm => Self::BC2Unorm,
+            ImageFormat::BC2Srgb => Self::BC2Srgb,
+            ImageFormat::BC3Unorm => Self::BC3Unorm,
+            ImageFormat::BC3Srgb => Self::BC3Srgb,
+            ImageFormat::BC4Unorm => Self::BC4Unorm,
+            ImageFormat::BC4Snorm => Self::BC4Snorm,
+            ImageFormat::BC5Unorm => Self::BC5Unorm,
+            ImageFormat::BC5Snorm => Self::BC5Snorm,
+            ImageFormat::BC6Ufloat => Self::BC6Ufloat,
+            ImageFormat::BC6Sfloat => Self::BC6Sfloat,
+            ImageFormat::BC7Unorm => Self::BC7Unorm,
+            ImageFormat::BC7Srgb => Self::BC7Srgb,
+        }
+    }
+}
+
+impl Into<ImageFormat> for DDSFormat {
+    fn into(self) -> ImageFormat {
+        match self {
+            Self::R8Unorm => ImageFormat::R8Unorm,
+            Self::R8G8B8A8Unorm => ImageFormat::R8G8B8A8Unorm,
+            Self::R8G8B8A8Srgb => ImageFormat::R8G8B8A8Srgb,
+            Self::R32G32B32A32Float => ImageFormat::R32G32B32A32Float,
+            Self::B8G8R8A8Unorm => ImageFormat::B8G8R8A8Unorm,
+            Self::B8G8R8A8Srgb => ImageFormat::B8G8R8A8Srgb,
+            Self::BC1Unorm => ImageFormat::BC1Unorm,
+            Self::BC1Srgb => ImageFormat::BC1Srgb,
+            Self::BC2Unorm => ImageFormat::BC2Unorm,
+            Self::BC2Srgb => ImageFormat::BC2Srgb,
+            Self::BC3Unorm => ImageFormat::BC3Unorm,
+            Self::BC3Srgb => ImageFormat::BC3Srgb,
+            Self::BC4Unorm => ImageFormat::BC4Unorm,
+            Self::BC4Snorm => ImageFormat::BC4Snorm,
+            Self::BC5Unorm => ImageFormat::BC5Unorm,
+            Self::BC5Snorm => ImageFormat::BC5Snorm,
+            Self::BC6Ufloat => ImageFormat::BC6Ufloat,
+            Self::BC6Sfloat => ImageFormat::BC6Sfloat,
+            Self::BC7Unorm => ImageFormat::BC7Unorm,
+            Self::BC7Srgb => ImageFormat::BC7Srgb,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+pub struct TexUnit {
+    pub paths: Arc<[PathBuf]>,
+    pub encoding: DDSFormat,
+}
+
+lazy_static! {
+    static ref DEFAULT_SCRIPTS: HashMap<String, String> = {
+        let mut m = HashMap::new();
+        m.insert("build".to_string(), "$self build && $self gen-ini && $self link".to_string());
+        m.insert("watch".to_string(), "$self watch | $self run build".to_string());
+        m
+    };
+    static ref DEFAULT_EXE: Exectuable = Exectuable::new();
+}
+
+
+#[derive(Derivative, Serialize, Deserialize)]
+#[derivative(PartialEq, Debug, Default, Clone)]
+pub struct Config {
+    #[serde(skip)]
+    #[derivative(Default(value = "DEFAULT_EXE.clone()"))]
+    pub execute: Exectuable,
+
+    // Based on User Input
+    #[serde(rename = "Project Name")]
+    pub project_name: String,
+    #[serde(rename = "Project Authors")]
+    pub authors: HashSet<Arc<str>>,
+    #[serde(rename = "3DMigoto Path")]
+    pub migoto_path: Option<PathBuf>,
+
+    #[serde(rename = "Scripts")]
+    #[derivative(Default(value = "DEFAULT_SCRIPTS.clone()"))]
+    pub scripts: HashMap<String, String>,
+
+    #[serde(skip)]
+    pub scripts_parsed: HashMap<String, ScriptParser>,
+
+    #[serde(rename = "Project Type")]
+    pub project_type: HashSet<ProjectType>,
+    // Generated By Scaffold
+    #[serde(rename = "Model Textures")]
+    pub model_textures: HashMap<String, TexUnit>,
+    // Generated By Scaffold
+    #[serde(rename = "Textures")]
+    pub texture_textures: HashMap<String, TexUnit>,
+    // Key -> Target
+    // Value -> Source
+}
+
+impl Config {
+    pub fn valid_exe(&self) -> bool{
+        return Exectuable::new().eq(&self.execute)
+    }
+  
+    pub fn load_project_conf(&mut self) {
+        trace!("Attempting to Load Config");
+        let mut reader = File::open("./Config.yml").expect("Failed to Open Config File");
+        let mut buf = String::new();
+        reader
+            .read_to_string(&mut buf)
+            .expect("Failed to Read File");
+      
+        let new_conf = serde_yaml::from_str::<Config>(&buf).expect("Failed to Parse Config");
+        self.clone_from(&new_conf);
+        self.execute=DEFAULT_EXE.clone();
+        self.scripts_parsed = self.scripts.iter().map(|(key, val)| (key.to_owned(), ScriptParser::from_str(val.as_str()).unwrap())).collect();
+        trace!("Config: {:#?}", self);
+    }
+
+    pub fn save_project_conf(&self, path: Option<PathBuf>) {
+        trace!("Attempting to Save Config");
+        let mut writter = File::create(path.unwrap_or(PathBuf::from(".")).join("Config.yml"))
+            .expect("Failed to Open Config File");
+        let _ = writter
+            .write_all(
+                serde_yaml::to_string(&self)
+                    .expect("Failed to Convert Config to String")
+                    .as_bytes(),
+            )
+            .map_err(|e| error!("Failed to Write Config: {:}", e));
+        info!("Config Successfully Saved");
+    }
+}
+
+pub fn does_config_exist() -> bool {
+    trace!("Checking if Config Exists in Current Directory");
+    let path = PathBuf::from("./Config.yml");
+    if path.exists() {
+        trace!("Config found");
+        return true;
+    }
+    trace!("Config not found");
+    return false;
+}
