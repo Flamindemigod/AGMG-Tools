@@ -3,9 +3,9 @@ resolver = "2"
 
 
 members = [
-    # "Scaffold",
-    # "Watcher",
-    # "TexGen",
+    "Scaffold",
+    "Watcher",
+    "TexGen",
     "GBT"
 ]
 
