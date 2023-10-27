@@ -32,8 +32,9 @@ GBT offers a range of features to simplify the development and management of GIM
 ## Installation
 
 To install GBT, head over to the Release Page and grab the latest Execuatable for your platform:
-
+And Grab the [blender plugin](https://github.com/Flamindemigod/AGMG-Tools/blob/master/Blender/blender_3dmigoto_plugin.py). This plugin conflicts with the Original Made by SilentNightSound. So make sure to remove the original.
 ## Getting Started
+> Use `gbt --help` to see available commands and their descriptions.
 
 1. **Initialize a New Project**: Create a new project by running the following command and following the prompts:
 
@@ -46,9 +47,9 @@ To install GBT, head over to the Release Page and grab the latest Execuatable fo
 
 3. **Running GBT**: Execute GBT commands to perform various tasks such as building textures, generating texture mod inis, linking mods, and more. Use `gbt run watch` to start up the watcher. 
 
-> Use `gbt --help` to see available commands and their descriptions.
+4. **Exporting Mods** Most of the stuff in blender will remain the same as the guide made by Silent. However during the export. Navigate to the `Source/Model` Folder and save the with the name of the original object. in this case, `Furina.vb` and turn off `use foldername when exporting`. And Voila, the project should export and rebuild all your textures.
 
-4. **Self-Update**: Keep GBT up to date by running:
+5. **Self-Update**: Keep GBT up to date by running:
 
    ```bash
    gbt update
