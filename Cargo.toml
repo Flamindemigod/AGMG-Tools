@@ -1,12 +1,17 @@
 [workspace]
+resolver = "2"
+
 
 members = [
-    "Scaffold","Watcher","TexGen","GBT"
+    # "Scaffold",
+    # "Watcher",
+    # "TexGen",
+    "GBT"
 ]
 
 
-# [profile.release]
-# opt-level = "s"
-# strip = "debuginfo"
-# debug = false
-# lto = true
+[profile.release]
+opt-level = "s"
+strip = "debuginfo"
+debug = false
+lto = true
