@@ -54,7 +54,7 @@ jobs:
         if: ${{ matrix.os }} == windows-latest
         with:
           name: GBT
-          path: "AGMG-Tools/**/*.exe"
+          path: ${{ github.workspace }}/**/*/gbt.exe
     
 
 
