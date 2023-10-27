@@ -5,105 +5,87 @@ permissions:
 
   
 on:
-  release:
-    types: [created]
+  push:
+    tags:
+      - '*'
 
 
 jobs:
-  create-release:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: taiki-e/create-gh-release-action@v1
-        with:
-          # (required) GitHub token for creating GitHub Releases.
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-  upload-assets:
-    needs: create-release
+  publish:
+    name: Publish for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os:
-          - ubuntu-latest
-          - macos-latest
-          - windows-latest
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Compile And Upload Archive
-        id: compile
-        uses: taiki-e/upload-rust-binary-action@v1
-        with:
-          # (required) Comma-separated list of binary names (non-extension portion of filename) to build and upload.
-          # Note that glob pattern is not supported yet.
-          bin: gbt
-          archive: app-$target
-          # (optional) On which platform to distribute the `.tar.gz` file.
-          # [default value: unix]
-          # [possible values: all, unix, windows, none]
-          tar: unix
-          # (optional) On which platform to distribute the `.zip` file.
-          # [default value: windows]
-          # [possible values: all, unix, windows, none]
-          zip: none
-          # (required) GitHub token for uploading assets to GitHub Releases.
-          token: ${{ secrets.GITHUB_TOKEN }}
-          asset: COPYING,Readme.md,Blender/blender_3dmigoto_plugin.py
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        if: ${{ matrix.os }} == windows-latest
-        with:
-          name: GBT
-          path: ${{ github.workspace }}/**/*/gbt.exe
-    
+        include:
+          - os: ubuntu-latest
+            artifact_name: gbt
+            asset_name: gbt-linux-amd64
+          - os: windows-latest
+            artifact_name: gbt.exe
+            asset_name: gbt.exe
+          - os: macos-latest
+            artifact_name: gbt
+            asset_name: gbt-macos-amd64
 
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: cargo build --bin gbt --release --locked
+    - name: Upload binaries to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: target/release/${{ matrix.artifact_name }}
+        asset_name: ${{ matrix.asset_name }}
+        tag: ${{ github.ref }}
+
+
+        
 
 # jobs:
-#   windows-release:
-#     name: release windows
+#   create-release:
 #     runs-on: ubuntu-latest
-#     strategy:
-#       fail-fast: false
 #     steps:
-#       - uses: actions/checkout@master
-#       - name: compile
-#         id: compile
-#         uses: rust-build/rust-build.action@v1.4.4
-#         env:
-#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#       - uses: actions/checkout@v4
+#       - uses: taiki-e/create-gh-release-action@v1
 #         with:
-#           SRC_DIR: "GBT"
-#           TOOLCHAIN_VERSION: stable-x86_64-pc-windows-msvc
-#           RUSTTARGET: x86_64-pc-windows-gnu
-#           UPLOAD_MODE: none
-#           EXTRA_FILES: "COPYING Readme.md Blender/blender_3dmigoto_plugin.py"
+#           # (required) GitHub token for creating GitHub Releases.
+#           token: ${{ secrets.GITHUB_TOKEN }}
+
+#   upload-assets:
+#     needs: create-release
+#     strategy:
+#       matrix:
+#         os:
+#           - ubuntu-latest
+#           - macos-latest
+#           - windows-latest
+#     runs-on: ${{ matrix.os }}
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Compile And Upload Archive
+#         id: compile
+#         uses: taiki-e/upload-rust-binary-action@v1
+#         with:
+#           # (required) Comma-separated list of binary names (non-extension portion of filename) to build and upload.
+#           # Note that glob pattern is not supported yet.
+#           bin: gbt
+#           archive: app-$target
+#           # (optional) On which platform to distribute the `.tar.gz` file.
+#           # [default value: unix]
+#           # [possible values: all, unix, windows, none]
+#           tar: unix
+#           # (optional) On which platform to distribute the `.zip` file.
+#           # [default value: windows]
+#           # [possible values: all, unix, windows, none]
+#           zip: none
+#           # (required) GitHub token for uploading assets to GitHub Releases.
+#           token: ${{ secrets.GITHUB_TOKEN }}
+#           asset: COPYING,Readme.md,Blender/blender_3dmigoto_plugin.py
 #       - name: Upload artifact
 #         uses: actions/upload-artifact@v3
+#         if: ${{ matrix.os }} == windows-latest
 #         with:
-#           name: Binary
-#           path: |
-#             ${{ steps.compile.outputs.BUILT_ARCHIVE }}
-#             ${{ steps.compile.outputs.BUILT_CHECKSUM }}
-
-#   non-windows-release:          
-#     name: release ${{ matrix.target }}
-#     runs-on: ubuntu-latest
-#     strategy:
-#       fail-fast: false
-#       matrix:
-#         include:
-#           - target: x86_64-unknown-linux-musl
-#             archive: tar.gz tar.xz tar.zst
-#           - target: x86_64-apple-darwin
-#             archive: zip
-#     steps:
-#     - uses: actions/checkout@master
-#     - name: Compile and release
-#       uses: rust-build/rust-build.action@v1.4.4
-#       env:
-#         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#         with:
-#         SRC_DIR: GBT
-#         RUSTTARGET: ${{ matrix.target }}
-#         ARCHIVE_TYPES: ${{ matrix.archive }}
-      
+#           name: GBT
+#           path: ${{ github.workspace }}/**/*/gbt.exe
+    
