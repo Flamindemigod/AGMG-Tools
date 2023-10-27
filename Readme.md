@@ -44,7 +44,9 @@ To install GBT, head over to the Release Page and grab the latest Execuatable fo
 
 2. **Configuration**: Customize GBT by editing the `Config.yml` configuration file to define your scripts, mod settings, and more. 
 
-3. **Running GBT**: Execute GBT commands to perform various tasks such as building textures, generating texture mod inis, linking mods, and more. Use `gbt --help` to see available commands and their descriptions.
+3. **Running GBT**: Execute GBT commands to perform various tasks such as building textures, generating texture mod inis, linking mods, and more. Use `gbt run watch` to start up the watcher. 
+
+> Use `gbt --help` to see available commands and their descriptions.
 
 4. **Self-Update**: Keep GBT up to date by running:
 

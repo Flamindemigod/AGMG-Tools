@@ -13,7 +13,6 @@ use std::{
     time::Duration,
 };
 
-
 fn paths(files: &mut Vec<String>, paths: &Vec<PathBuf>) -> Option<PathBuf> {
     for path in paths {
         let is_match = files.par_iter().any(|file| {
@@ -29,6 +28,12 @@ fn paths(files: &mut Vec<String>, paths: &Vec<PathBuf>) -> Option<PathBuf> {
             }
             trace!("matched: {:#?}", path);
             return Some(path.to_path_buf());
+        } else {
+            if let Some(extension) = path.extension() {
+                if extension.to_str().unwrap() == "ini" {
+                    build_watch_files(files);
+                }
+            }
         }
     }
     return None;
@@ -38,6 +43,14 @@ fn build_watch_files(files: &mut Vec<String>) {
     info!("Building Watch Files");
     *files = vec![];
     files.push("./Config.yml".to_owned());
+    let ini_res = glob::glob("./Output/*.ini").unwrap().find(|_| true);
+    if let Some(ini_path) = ini_res {
+        match ini_path {
+            Ok(ini_path) => files.push(ini_path.to_str().unwrap().to_owned()),
+            Err(_) => (),
+        }
+    }
+
     let mut tex = CONFIG
         .lock()
         .unwrap()
@@ -91,9 +104,7 @@ pub fn watch() {
         match result {
             Ok(events) => events
                 .iter()
-                .map(|event| {
-                    paths(&mut watched_files, &event.paths)
-                })
+                .map(|event| paths(&mut watched_files, &event.paths))
                 .filter(|f| f.is_some())
                 .map(|f| f.unwrap())
                 .collect::<HashSet<_>>()
