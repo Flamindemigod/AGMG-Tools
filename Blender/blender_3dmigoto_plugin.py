@@ -1050,8 +1050,12 @@ def import_files(context: bpy.types.Context,keys, files):
     return importedmeshes
 
 def post_import_3dmigoto(operator, context, paths, load_tex=True, **kwargs):
-    folder = os.path.dirname(operator.properties.filepath)
-    textures_dir = os.path.join(os.path.split(folder)[0], "Textures")
+    folder = os.path.normpath(os.path.dirname(operator.properties.filepath))
+    textures_dir = folder.split(os.sep)[:-2]
+    textures_dir.append("Textures")
+    textures_dir.append("Model")
+    textures_dir = os.sep.join(textures_dir)
+    # textures_dir = os.path.join(os.path.split(folder)[0], "Textures")
     files = os.listdir(textures_dir)
     files = [f for f in files if f.endswith(".png")]
     keys = [f.removesuffix("DiffuseFlat.png") for f in files if f.endswith("DiffuseFlat.png")]
@@ -1838,7 +1842,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
 
 def generate_mod_folder(path, character_name, no_ramps, delete_intermediate, credit):
 
-    parent_folder = os.path.join(path, "../")
+    parent_folder = os.path.join(path, "../../")
 
     char_hash = load_hashes(path, character_name, "hash.json")
     create_mod_folder(parent_folder)
