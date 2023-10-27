@@ -1,4 +1,4 @@
-use crate::CONFIG;
+use crate::{CONFIG, utils::copy};
 use anyhow::Result;
 use filetime::FileTime;
 use log::{error, info, trace};
@@ -15,19 +15,23 @@ use std::{
 use super::{config::TexUnit, dds::build_from_tex_unit};
 
 fn build_texture_units(force: bool, textures: HashMap<String, TexUnit>) -> Result<Vec<()>> {
+    let cache_path = current_dir().unwrap().join("Textures/Cache");
+    let output_path = current_dir().unwrap().join("Output");
+    fs::create_dir_all(&cache_path)?;
+    fs::create_dir_all(&output_path)?;
     textures
         .par_iter()
         .map(|(filename, texunit)| {
-            let output_path = current_dir().unwrap().join("Output");
+            let cache_file_name = cache_path.join(format!("{:}.dds", filename));
             let output_file_name = output_path.join(format!("{:}.dds", filename));
-            fs::create_dir_all(&output_path)?;
             //Check for updates or force
-            if force || needs_rebuild(texunit.paths.clone(), output_file_name.clone()) {
-                build_from_tex_unit(texunit.clone(), output_file_name)
+            if force || needs_rebuild(texunit.paths.clone(), cache_file_name.clone()) {
+                build_from_tex_unit(texunit.clone(), cache_file_name.clone())?;
             } else {
                 trace!("{:} does not need rebuild", filename);
-                Ok(())
             }
+            copy::copy(&cache_file_name, &output_file_name, false)?;
+            Ok(())
         })
         .collect::<Result<Vec<_>, _>>()
 }

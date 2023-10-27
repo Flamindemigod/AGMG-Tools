@@ -46,8 +46,8 @@ pub fn copy(source: &PathBuf, target: &PathBuf, should_symlink: bool) -> Result<
     if should_symlink {
         symlink(source, target)?;
     } else {
-        fs::create_dir_all(target)?;
         if source.is_dir() {
+            fs::create_dir_all(target)?;
             let mut options = cpo_dir::new();
             options.content_only = true;
             options.overwrite = true;
