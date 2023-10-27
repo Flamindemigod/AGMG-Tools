@@ -1,5 +1,6 @@
 use crate::{utils::exec_validation::Exectuable, CONFIG};
 use file_diff::diff;
+use itertools::Itertools;
 use log::{error, info, trace};
 use std::io::{stderr, stdout, Write};
 use std::{
@@ -11,6 +12,8 @@ use std::{
     str::FromStr,
 };
 use subprocess::{Popen, PopenConfig};
+
+use super::config::does_config_exist;
 
 #[derive(Debug, Clone, Default, PartialEq)]
 enum Operator {
@@ -104,7 +107,7 @@ impl FromStr for ScriptParser {
 }
 
 pub trait Run {
-    fn run(&self);
+    fn run(&self, debug_level: u8);
 }
 
 fn run_none(command: Vec<&str>) {
@@ -138,7 +141,7 @@ fn run_none(command: Vec<&str>) {
     }
 }
 
-fn run_and(command: Vec<&str>, segment: &ScriptParser) {
+fn run_and(command: Vec<&str>, segment: &ScriptParser, debug_level:u8) {
     let mut p = Popen::create(
         &command,
         PopenConfig {
@@ -159,7 +162,7 @@ fn run_and(command: Vec<&str>, segment: &ScriptParser) {
             if status.success() {
                 match &segment.next_segment {
                     Some(next_command) => {
-                        next_command.run();
+                        next_command.run(debug_level);
                     }
                     None => {
                         error!("process: {:#?}; Exited with {:#?}", command, status);
@@ -175,7 +178,7 @@ fn run_and(command: Vec<&str>, segment: &ScriptParser) {
     }
 }
 
-fn run_or(command: Vec<&str>, segment: &ScriptParser) {
+fn run_or(command: Vec<&str>, segment: &ScriptParser, debug_level:u8) {
     let mut p = Popen::create(
         &command,
         PopenConfig {
@@ -200,7 +203,7 @@ fn run_or(command: Vec<&str>, segment: &ScriptParser) {
             error!("Popen Failed on: {:#?}; Errored with {:#?}", command, err);
             match &segment.next_segment {
                 Some(next_command) => {
-                    next_command.run();
+                    next_command.run(debug_level);
                 }
                 None => (),
             }
@@ -209,8 +212,9 @@ fn run_or(command: Vec<&str>, segment: &ScriptParser) {
 }
 
 impl Run for ScriptParser {
-    fn run(&self) {
+    fn run(&self, debug_level: u8) {
         trace!("Running");
+        let mut d = "-".to_owned();
         let exectuable = Exectuable::new();
         let mut command = vec![if self.command == "$self" {
             if exectuable.eq(&CONFIG.lock().unwrap().execute) {
@@ -221,15 +225,16 @@ impl Run for ScriptParser {
         } else {
             self.command.as_str()
         }];
-        if self.command == "$self"{
-            command.push("-ddd");
+        if self.command == "$self" && debug_level != 0{
+            d.push_str((0..debug_level).map(|_| "d").join("").as_str());
+            command.push(d.as_str());
         }
         let mut args: Vec<_> = self.args.iter().map(|f| f.as_str()).collect();
         command.append(&mut args);
         match self.operator {
-            Operator::And => run_and(command, self),
+            Operator::And => run_and(command, self, debug_level),
             Operator::None => run_none(command),
-            Operator::Or => run_or(command, self),
+            Operator::Or => run_or(command, self, debug_level),
             Operator::Pipe => {
                 let mut p = Popen::create(
                     &command,
@@ -255,7 +260,7 @@ impl Run for ScriptParser {
                         } else {
                             match &self.next_segment {
                                 Some(next_command) => {
-                                    next_command.run();
+                                    next_command.run(debug_level);
                                 }
                                 None => (),
                             }
@@ -267,7 +272,11 @@ impl Run for ScriptParser {
     }
 }
 
-pub fn run_script(script: String) {
+pub fn run_script(script: String, debug_level: u8) {
+    if !does_config_exist() {
+        error!("Config does not exist. Exiting....");
+        exit(1);
+    }
     let parser = CONFIG.lock().unwrap().scripts_parsed.get(&script).unwrap().to_owned();
-    parser.run();
+    parser.run(debug_level);
 }

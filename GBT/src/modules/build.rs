@@ -1,4 +1,4 @@
-use crate::{CONFIG, utils::copy};
+use crate::{CONFIG, utils::copy, modules::config::does_config_exist};
 use anyhow::Result;
 use filetime::FileTime;
 use log::{error, info, trace};
@@ -37,6 +37,10 @@ fn build_texture_units(force: bool, textures: HashMap<String, TexUnit>) -> Resul
 }
 
 pub fn build(force: bool) {
+    if !does_config_exist() {
+        error!("Config does not exist. Exiting....");
+        exit(1);
+    }
     let textures = CONFIG.lock().unwrap().model_textures.clone();
     let res = build_texture_units(force, textures);
     if res.is_err() {

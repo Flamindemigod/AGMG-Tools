@@ -203,7 +203,7 @@ fn main() {
 
     match cli.main_command {
         Branches::Init(init) => scaffold::scaffold(init.project_path),
-        Branches::Run(script) => run_script(script.script),
+        Branches::Run(script) => run_script(script.script, cli.debug),
         Branches::Clean => trace!("In Clean"),
         Branches::Build(build) => build!(build.force),
         Branches::Watch => watch(),
