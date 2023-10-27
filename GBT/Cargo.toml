@@ -47,12 +47,3 @@ zip = {version = "0.6.6", features = ["time", "deflate-zlib"]}
 [features]
 default=["timestamps"]
 timestamps = ["stderrlog/timestamps"]
-
-
-
-
-[profile.release]
-opt-level = "s"
-strip = "debuginfo"
-debug = false
-lto = true
