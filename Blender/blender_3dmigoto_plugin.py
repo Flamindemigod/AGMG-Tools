@@ -1000,8 +1000,8 @@ def newMat(name, textures):
     if textures["lightmap_flat"]:
         lightmap_flat_image = newTex(material, textures["lightmap_flat"])
         sep_color = material.node_tree.nodes.new("ShaderNodeSeparateColor")
-        material.node_tree.links.new(sep_color.outputs[0], bsdf.inputs[6])
         material.node_tree.links.new(lightmap_flat_image.outputs[0], sep_color.inputs[0])
+        material.node_tree.links.new(sep_color.outputs[0], bsdf.inputs[7])
         material.node_tree.links.new(sep_color.outputs[1], AO.inputs[0])
         material.node_tree.links.new(AO.outputs[-1], ao_mult.inputs[-2])
         
@@ -2436,7 +2436,7 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
     use_foldername : BoolProperty(
         name="Use foldername when exporting",
         description="Sets the export name equal to the foldername you are exporting to. Keep true unless you have changed the names",
-        default=True,
+        default=False,
     )
 
     ignore_hidden : BoolProperty(
