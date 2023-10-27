@@ -221,7 +221,9 @@ impl Run for ScriptParser {
         } else {
             self.command.as_str()
         }];
-
+        if self.command == "$self"{
+            command.push("-ddd");
+        }
         let mut args: Vec<_> = self.args.iter().map(|f| f.as_str()).collect();
         command.append(&mut args);
         match self.operator {

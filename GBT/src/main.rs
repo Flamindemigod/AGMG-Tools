@@ -1,15 +1,19 @@
 mod modules;
 pub mod utils;
 
+use crate::modules::{config::does_config_exist, script::run_script};
 use clap::{Args, Command, Error, FromArgMatches, Parser, Subcommand};
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use log::*;
-use modules::{config::Config, watcher::watch, *};
+use modules::{
+    archive::{archive_project, export_mod, run_unzip},
+    config::Config,
+    watcher::watch,
+    *,
+};
 use std::{path::PathBuf, process::exit, sync::Mutex};
-use utils::{test::test, version::Version};
-use crate::modules::{config::does_config_exist, script::run_script};
-
+use utils::version::Version;
 
 lazy_static! {
     pub static ref VERSION: Version = Version::from_str(env!("CARGO_PKG_VERSION")).unwrap();
@@ -28,7 +32,6 @@ enum Branches {
     #[command(subcommand)]
     Run(RunBranch),
     Clean,
-    Test,
     /// Used to Build Textures
     // #[command(hide = true, hide_possible_values=true)]
     Build(BuildBranch),
@@ -41,6 +44,13 @@ enum Branches {
     /// Used Link Mod to 3DMigoto
     // #[command(hide = true, hide_possible_values=true)]
     Link(LinkBranch),
+    /// Exports Finished Mods as a Zip File
+    Export(ExportBranch),
+    /// Compresses Entire Project Directory to Folder.
+    Archive(ArchiveBranch),
+    /// Exports Finished Mods as a Zip File
+    Extract(ExtractBranch),
+
     /// Check for Updates and Update if Available
     Update,
 }
@@ -133,6 +143,31 @@ struct LinkBranch {
     symlink: bool,
 }
 
+#[derive(Args, Debug, Clone)]
+struct ArchiveBranch {
+    #[arg(default_value = "..")]
+    /// Path to Where you want the project archive to be stored
+    archive_path: PathBuf,
+}
+
+#[derive(Args, Debug, Clone)]
+struct ExportBranch {
+    #[arg(default_value = ".")]
+    /// Path to Where you want the project archive to be stored
+    export_path: PathBuf,
+}
+
+#[derive(Args, Debug, Clone)]
+struct ExtractBranch {
+    #[arg(required = true)]
+    /// Path to the archived Project Zip
+    path_to_project_zip: PathBuf,
+
+    #[arg(default_value = ".")]
+    /// Path to Where you want the Project to be extracted to
+    extract_path: PathBuf,
+}
+
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
 struct CLI {
@@ -141,7 +176,7 @@ struct CLI {
     main_command: Branches,
 
     /// Debug mode (-d, -dd, -ddd, etc)
-    #[arg(short, action=clap::ArgAction::Count)]
+    #[arg(short, action=clap::ArgAction::Count, default_value="3")]
     debug: u8,
 
     #[cfg(feature = "timestamps")]
@@ -169,12 +204,16 @@ fn main() {
     match cli.main_command {
         Branches::Init(init) => scaffold::scaffold(init.project_path),
         Branches::Run(script) => run_script(script.script),
-        Branches::Test => test(),
         Branches::Clean => trace!("In Clean"),
         Branches::Build(build) => build!(build.force),
         Branches::Watch => watch(),
         Branches::GenIni => gen_ini::gen_ini(),
         Branches::Link(link) => linker::link(link.symlink),
-        Branches::Update => (),
+        Branches::Update => updater::update(),
+        Branches::Archive(archive) => archive_project(&archive.archive_path),
+        Branches::Extract(extract) => {
+            run_unzip(&extract.path_to_project_zip, &extract.extract_path)
+        }
+        Branches::Export(export) => export_mod(&export.export_path),
     }
 }

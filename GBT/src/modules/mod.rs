@@ -7,3 +7,5 @@ pub mod build;
 pub mod script;
 pub mod gen_ini;
 pub mod linker;
+pub mod archive;
+pub mod updater;
